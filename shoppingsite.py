@@ -52,7 +52,7 @@ def show_melon(melon_id):
     Show all info about a melon. Also, provide a button to buy that melon.
     """
 
-    melon = melons.get_by_id(f"{escape(melon_id)}")
+    melon = melons.get_by_id(melon_id)
     print(melon)
     return render_template("melon_details.html",
                            display_melon=melon)
@@ -80,22 +80,25 @@ def show_shopping_cart():
     # Make sure your function can also handle the case wherein no cart has
     # been added to the session - update more'''
 
-    total = 0
+    order_total = 0
     list = []
     cart = session.get('cart', {})
 
     for melon_id, quantity in cart.items():
         melon = melons.get_by_id(melon_id)
 
-        cost = quantity * melon.price
-        total += cost
+        total_cost = quantity * melon.price
+        order_total += total_cost
+
+        melon.quantity = quantity
+        melon.total_cost = total_cost
 
         list.append(melon)
 
 
     return render_template("cart.html",
                             cart=list,
-                            total=total)
+                            order_total=order_total)
 
 
 @app.route("/add_to_cart/<melon_id>")
@@ -120,13 +123,9 @@ def add_to_cart(melon_id):
     if "cart" in session:
         cart = session["cart"]
     else:
-        session["cart"] = {}
-        cart = session['cart']
+        cart = session["cart"] = {}
 
-    if melon_id in cart:
-        cart[melon_id] += 1
-    else:
-        cart[melon_id] = 1
+    cart[melon_id] = cart.get(melon_id, 0) + 1
     
     flash(f"{melon_id} was added to the cart")
 
